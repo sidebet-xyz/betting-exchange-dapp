@@ -1,4 +1,4 @@
-const tokenAddress = "YOUR_BETTING_EXCHANGE_TOKEN_ADDRESS_HERE";
+const tokenAddress = "0x4F5D4a27625Cd12C8582E0ea390542a787D5d8f2";
 const RSK_TESTNET_ID = 31;
 let web3, accounts, bettingExchangeToken, bettingExchangeTokenABI;
 
