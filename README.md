@@ -16,8 +16,7 @@ https://public-node.testnet.rsk.co
 31
 ### Currency symbol
 tRBTC
-### Block explorer URL
-(Optional)
+### Block explorer URL (Optional)
 https://explorer.testnet.rsk.co/
 
 ## RSK Testnet Faucet
