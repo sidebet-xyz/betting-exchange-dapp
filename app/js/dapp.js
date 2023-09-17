@@ -157,4 +157,4 @@ async function loadABI(filename) {
 }
 
 // Initialize
-initWeb3();
+document.getElementById("connect-button").addEventListener("click", initWeb3);
