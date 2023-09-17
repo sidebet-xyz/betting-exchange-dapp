@@ -4,6 +4,14 @@ let web3, accounts, bettingExchangeToken, readyState;
 async function initWeb3() {
   if (typeof window.ethereum !== "undefined") {
     web3 = new Web3(window.ethereum);
+    const networkId = await web3.eth.net.getId();
+
+    if (networkId !== 31) {
+      // 31 is RSK testnet chain ID
+      alert("Please switch to RSK testnet in your MetaMask!");
+      return;
+    }
+
     try {
       // Request permission to access accounts
       accounts = await window.ethereum.request({
@@ -11,14 +19,21 @@ async function initWeb3() {
       });
       document.getElementById("address").textContent = accounts[0];
 
-      const bettingExchangeTokenABI = await loadABI("BettingExchangeTokenABI.json");
-      bettingExchangeToken = new web3.eth.Contract(bettingExchangeTokenABI, tokenAddress);
+      const bettingExchangeTokenABI = await loadABI(
+        "BettingExchangeTokenABI.json"
+      );
+      bettingExchangeToken = new web3.eth.Contract(
+        bettingExchangeTokenABI,
+        tokenAddress
+      );
 
       // Event listeners for form submission and other buttons
-      document.getElementById("bet-form").addEventListener("submit", function(event) {
-        event.preventDefault();
-        createBet();
-      });
+      document
+        .getElementById("bet-form")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+          createBet();
+        });
 
       document.getElementById("accept-bet").addEventListener("click", () => {
         const betId = document.getElementById("bet-id-accept").value;
@@ -27,7 +42,8 @@ async function initWeb3() {
 
       document.getElementById("settle-bet").addEventListener("click", () => {
         const betId = document.getElementById("bet-id-settle").value;
-        const winner = document.getElementById("winner-address-settle").value || accounts[0];
+        const winner =
+          document.getElementById("winner-address-settle").value || accounts[0];
         settleBet(betId, winner);
       });
 
@@ -40,16 +56,17 @@ async function initWeb3() {
       });
 
       loadBets();
-
     } catch (error) {
       console.error("There was an error!", error);
       document.getElementById("error-message").style.display = "block";
-      document.getElementById("no-metamask").textContent = "Error: " + error.message;
+      document.getElementById("no-metamask").textContent =
+        "Error: " + error.message;
     }
   } else {
     console.error("Please install MetaMask to use this dApp!");
     document.getElementById("error-message").style.display = "block";
-    document.getElementById("no-metamask").textContent = "Please install MetaMask to use this dApp!";
+    document.getElementById("no-metamask").textContent =
+      "Please install MetaMask to use this dApp!";
   }
 }
 
