@@ -19,3 +19,7 @@ tRBTC
 ### Block explorer URL
 (Optional)
 https://explorer.testnet.rsk.co/
+
+## RSK Testnet Faucet
+
+https://faucet.rsk.co/
