@@ -1,3 +1,7 @@
-# betting-exchange-dapp
+# betting-exchange-dapp-sandbox
 
-TESTING ONLY
+TESTING ONLY!!!
+
+USE AT OWN DISCRETION!!!
+
+TESTING ONLY!!!
