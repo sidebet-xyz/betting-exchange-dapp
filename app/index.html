@@ -3,8 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Side₿et Betting Exchange</title>
-    <link rel="stylesheet" href="styles.css" />
+    <title>Side₿et Betting Exchange Testing Sandbox</title>
+    <link rel="stylesheet" href="./css/reset.css" />
+    <link rel="stylesheet" href="./css/styles.css" />
+
     <script
       src="https://cdnjs.cloudflare.com/ajax/libs/web3/4.1.1/web3.min.js"
       integrity="sha512-C/TYwf93EQ6sPW4g3F9axNydQuQrAQCTOR1Gz65YK96MwrZ0KDn3qjNMAlXLYyjm84JELTYHinAfvUjbNC4fuQ=="
@@ -15,15 +17,15 @@
 
   <body>
     <header>
-      <h1>Side₿et Betting Exchange</h1>
+      <h1>Side₿et Betting Exchange Testing Sandbox</h1>
       <p>Connected Address: <span id="address">...</span></p>
-      <p>BET Balance: <span id="bet-balance">...</span></p>
+      <p>TBET Balance: <span id="bet-balance">...</span></p>
     </header>
 
     <section>
       <h2>Create a Bet</h2>
       <form id="bet-form">
-        <label for="bet-amount">Bet Amount (BET):</label>
+        <label for="bet-amount">Testing Bet Amount (TBET):</label>
         <input type="number" id="bet-amount" placeholder="Enter bet amount" />
         <label for="oracle-address">Oracle Address (optional):</label>
         <input
@@ -56,6 +58,6 @@
       <p id="no-metamask">...</p>
     </section>
 
-    <script src="dApp.js"></script>
+    <script src="./js/dapp.js"></script>
   </body>
 </html>
