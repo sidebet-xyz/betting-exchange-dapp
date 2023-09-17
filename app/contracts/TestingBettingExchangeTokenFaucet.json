@@ -154,7 +154,7 @@
 		"name": "token",
 		"outputs": [
 			{
-				"internalType": "contract BettingExchangeToken",
+				"internalType": "contract TestingBettingExchangeToken",
 				"name": "",
 				"type": "address"
 			}
