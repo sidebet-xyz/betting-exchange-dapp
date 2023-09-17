@@ -1,72 +1,78 @@
 const tokenAddress = "YOUR_BETTING_EXCHANGE_TOKEN_ADDRESS_HERE";
-let web3, accounts, bettingExchangeToken, readyState;
+const RSK_TESTNET_ID = 31;
+let web3, accounts, bettingExchangeToken, bettingExchangeTokenABI;
 
 async function initWeb3() {
-  if (typeof window.ethereum !== "undefined") {
-    web3 = new Web3(window.ethereum);
-    const networkId = await web3.eth.net.getId();
+  if (typeof window.ethereum === "undefined") {
+    displayError("Please install MetaMask to use this dApp!");
+    return;
+  }
 
-    if (networkId !== 31) {
-      // 31 is RSK testnet chain ID
-      alert("Please switch to RSK testnet in your MetaMask!");
-      return;
+  web3 = new Web3(window.ethereum);
+  const networkId = await web3.eth.net.getId();
+
+  if (networkId !== RSK_TESTNET_ID) {
+    displayError("Please switch to RSK testnet in your MetaMask!");
+    return;
+  }
+
+  try {
+    accounts = await requestAccounts();
+    displayAddress(accounts[0]);
+
+    if (!bettingExchangeTokenABI) {
+      bettingExchangeTokenABI = await loadABI("BettingExchangeTokenABI.json");
     }
+    bettingExchangeToken = new web3.eth.Contract(
+      bettingExchangeTokenABI,
+      tokenAddress
+    );
 
-    try {
-      // Request permission to access accounts
-      accounts = await window.ethereum.request({
-        method: "eth_requestAccounts",
-      });
-      document.getElementById("address").textContent = accounts[0];
+    setupEventListeners();
+    loadBets();
+    await displayBalance(); // Display balance after initialization
+  } catch (error) {
+    displayError(error.message);
+  }
+}
 
-      const bettingExchangeTokenABI = await loadABI(
-        "BettingExchangeTokenABI.json"
-      );
-      bettingExchangeToken = new web3.eth.Contract(
-        bettingExchangeTokenABI,
-        tokenAddress
-      );
+async function requestAccounts() {
+  try {
+    return await window.ethereum.request({
+      method: "eth_requestAccounts",
+    });
+  } catch (error) {
+    throw new Error("Permission denied. Please allow access to your account.");
+  }
+}
 
-      // Event listeners for form submission and other buttons
-      document
-        .getElementById("bet-form")
-        .addEventListener("submit", function (event) {
-          event.preventDefault();
-          createBet();
-        });
+function displayAddress(address) {
+  document.getElementById("address").textContent = address;
+}
 
-      document.getElementById("accept-bet").addEventListener("click", () => {
-        const betId = document.getElementById("bet-id-accept").value;
-        acceptBet(betId);
-      });
+function displayError(message) {
+  console.error(message);
+  document.getElementById("error-message").style.display = "block";
+  document.getElementById("no-metamask").textContent = "Error: " + message;
+}
 
-      document.getElementById("settle-bet").addEventListener("click", () => {
-        const betId = document.getElementById("bet-id-settle").value;
-        const winner =
-          document.getElementById("winner-address-settle").value || accounts[0];
-        settleBet(betId, winner);
-      });
+function setupEventListeners() {
+  window.ethereum.on("accountsChanged", () => {
+    initWeb3();
+  });
 
-      window.ethereum.on("accountsChanged", () => {
-        location.reload();
-      });
+  window.ethereum.on("chainChanged", () => {
+    initWeb3();
+  });
+}
 
-      window.ethereum.on("chainChanged", () => {
-        location.reload();
-      });
-
-      loadBets();
-    } catch (error) {
-      console.error("There was an error!", error);
-      document.getElementById("error-message").style.display = "block";
-      document.getElementById("no-metamask").textContent =
-        "Error: " + error.message;
-    }
-  } else {
-    console.error("Please install MetaMask to use this dApp!");
-    document.getElementById("error-message").style.display = "block";
-    document.getElementById("no-metamask").textContent =
-      "Please install MetaMask to use this dApp!";
+async function loadABI(filename) {
+  try {
+    const response = await fetch(`./abis/${filename}`);
+    return await response.json();
+  } catch (error) {
+    console.error(`Error loading ABI: ${filename}`, error);
+    throw new Error("Failed to load ABI");
   }
 }
 
@@ -81,13 +87,24 @@ async function createBet() {
   const amount = document.getElementById("bet-amount").value;
   const oracleAddress = document.getElementById("oracle-address").value || null;
 
-  try {
-    await bettingExchangeToken.methods
-      .createBet(amount, oracleAddress)
-      .send({ from: accounts[0] });
-    alert("Bet successfully created!");
+  if (!amount || isNaN(amount) || amount <= 0) {
+    alert("Please enter a valid bet amount.");
+    return;
+  }
 
-    loadBets();
+  try {
+    // Assuming you have a method `createNewBet` in your contract
+    const transaction = await bettingExchangeToken.methods
+      .createNewBet(amount, oracleAddress)
+      .send({ from: accounts[0] });
+
+    if (transaction.status === true) {
+      alert("Bet creation successful!");
+      loadBets(); // Refresh the bet listings
+    } else {
+      console.error("Transaction failed", transaction);
+      alert("Bet creation failed.");
+    }
   } catch (error) {
     console.error(error);
     alert("Error creating bet. Check the console for more information.");
@@ -112,49 +129,133 @@ async function loadBets() {
   const availableBetsDiv = document.getElementById("available-bets");
   const activeBetsDiv = document.getElementById("active-bets");
 
-  // These methods would be defined on your smart contract
-  const availableBets = await bettingExchangeToken.methods
-    .getAvailableBets()
-    .call();
-  const activeBets = await bettingExchangeToken.methods
-    .getActiveBetsForUser(accounts[0])
-    .call();
+  // Clear previous bet lists
+  availableBetsDiv.innerHTML = "";
+  activeBetsDiv.innerHTML = "";
 
-  // Assuming each bet has a unique ID, an amount, and an oracle address
-  availableBets.forEach((bet) => {
-    const betElement = document.createElement("div");
-    betElement.innerHTML = `
-      <p>Bet ID: ${bet.id}</p>
-      <p>Amount: ${bet.amount}</p>
-      <p>Oracle: ${bet.oracle || "No oracle assigned"}</p>
-      <button onClick="acceptBet(${bet.id})">Accept Bet</button>
-    `;
-    availableBetsDiv.appendChild(betElement);
-  });
+  // Fetch bet IDs in parallel for efficiency
+  const [availableBetIds, activeBetIds] = await Promise.all([
+    bettingExchangeToken.methods.getAvailableBets().call(),
+    bettingExchangeToken.methods.getActiveBetsForUser(accounts[0]).call(),
+  ]);
 
-  activeBets.forEach((bet) => {
-    const betElement = document.createElement("div");
-    betElement.innerHTML = `
-      <p>Bet ID: ${bet.id}</p>
-      <p>Amount: ${bet.amount}</p>
-      <p>Oracle: ${bet.oracle || "No oracle assigned"}</p>
-      <button onClick="settleBet(${
-        bet.id
-      }, 'winnerAddressHere')">Settle Bet</button>
-    `;
-    activeBetsDiv.appendChild(betElement);
-  });
+  // Load and display available bets
+  for (let id of availableBetIds) {
+    const bet = await bettingExchangeToken.methods.readBet(id).call();
+    const betDiv = createBetDiv(bet, "available");
+    availableBetsDiv.appendChild(betDiv);
+  }
+
+  // Load and display active bets for the user
+  for (let id of activeBetIds) {
+    const bet = await bettingExchangeToken.methods.readBet(id).call();
+    const betDiv = createBetDiv(bet, "active");
+    activeBetsDiv.appendChild(betDiv);
+  }
 }
 
-async function loadABI(filename) {
+async function settleBet(betId) {
   try {
-    const response = await fetch(`./abis/${filename}`);
-    const json = await response.json();
-    return json;
+    await bettingExchangeToken.methods
+      .settle(betId)
+      .send({ from: accounts[0] });
+    alert("Bet successfully settled!");
+    loadBets(); // Refresh the bet listings
   } catch (error) {
-    console.error(`Error loading ABI: ${filename}`, error);
+    console.error(error);
+    alert("Error settling bet. Check the console for more information.");
   }
+}
+
+// Utility function to create a div for a bet based on its type (available or active)
+function createBetDiv(bet, type) {
+  const betElement = document.createElement("div");
+  let actionButtons = "";
+
+  if (type === "available") {
+    if (bet.alice === accounts[0] && bet.state === "Listed") {
+      actionButtons = `
+        <button data-action="updateOracle" data-bet-id="${bet.id}">Update Oracle</button>
+        <button data-action="cancelBet" data-bet-id="${bet.id}">Cancel</button>
+      `;
+    } else if (bet.state === "Listed") {
+      actionButtons = `<button data-action="acceptBet" data-bet-id="${bet.id}">Accept Bet</button>`;
+    }
+  } else if (type === "active") {
+    // Check if the current account is the oracle for the bet
+    if (bet.oracle === accounts[0]) {
+      actionButtons = `<button data-action="settleBet" data-bet-id="${bet.id}">Settle Bet</button>`;
+    }
+  }
+
+  betElement.innerHTML = `
+    <p>Bet ID: ${bet.id}</p>
+    <p>Amount: ${bet.amount}</p>
+    <p>Oracle: ${bet.oracle || "No oracle assigned"}</p>
+    ${actionButtons}
+`;
+
+  return betElement;
 }
 
 // Initialize
 document.getElementById("connect-button").addEventListener("click", initWeb3);
+
+// Handle submissions
+document.getElementById("bet-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  await createBet();
+});
+
+// Handle event delegation
+document
+  .getElementById("available-bets")
+  .addEventListener("click", async function (e) {
+    const target = e.target;
+    if (target.tagName.toLowerCase() !== "button") return; // Early exit if the clicked element isn't a button
+
+    const action = target.getAttribute("data-action");
+    const betId = target.getAttribute("data-bet-id");
+
+    if (!action || !betId) return; // Early exit if the button doesn't have the required data attributes
+
+    switch (action) {
+      case "acceptBet":
+        await acceptBet(betId);
+        break;
+      case "updateOracle":
+        const newOracleAddress = prompt("Enter the new Oracle address:");
+        if (newOracleAddress) {
+          await bettingExchangeToken.methods
+            .updateOracle(betId, newOracleAddress)
+            .send({ from: accounts[0] });
+          alert("Oracle updated successfully!");
+          loadBets(); // Refresh the bet listings
+        }
+        break;
+      case "cancelBet":
+        await bettingExchangeToken.methods
+          .cancelBet(betId)
+          .send({ from: accounts[0] });
+        alert("Bet cancelled successfully!");
+        loadBets(); // Refresh the bet listings
+        break;
+    }
+  });
+
+document
+  .getElementById("active-bets")
+  .addEventListener("click", async function (e) {
+    const target = e.target;
+    if (target.tagName.toLowerCase() !== "button") return; // Early exit if the clicked element isn't a button
+
+    const action = target.getAttribute("data-action");
+    const betId = target.getAttribute("data-bet-id");
+
+    if (!action || !betId) return; // Early exit if the button doesn't have the required data attributes
+
+    if (action === "settleBet") {
+      // Assuming you'll implement this method
+      await settleBet(betId);
+    }
+  });

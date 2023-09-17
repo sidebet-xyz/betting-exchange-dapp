@@ -14,44 +14,76 @@
       referrerpolicy="no-referrer"
     ></script>
   </head>
-
   <body>
     <header>
       <h1>Side₿et Betting Exchange Testing Sandbox</h1>
-      <button id="connect-button">Connect</button>
-      <p>Connected Address: <span id="address">...</span></p>
-      <p>TBET Balance: <span id="bet-balance">...</span></p>
+      <button id="connect-button">Connect to MetaMask</button>
+      <div>
+        <p>Connected Address: <span id="address">Not connected</span></p>
+        <p>TBET Balance: <span id="bet-balance">0</span> TBET</p>
+      </div>
     </header>
 
-    <section>
-      <h2>Create a Bet</h2>
-      <form id="bet-form">
-        <label for="bet-amount">Testing Bet Amount (TBET):</label>
-        <input type="number" id="bet-amount" placeholder="Enter bet amount" />
-        <label for="oracle-address">Oracle Address (optional):</label>
-        <input
-          type="text"
-          id="oracle-address"
-          placeholder="Enter oracle address or leave empty"
-        />
-        <button id="create-bet">Create Bet</button>
-      </form>
-    </section>
+    <main>
+      <section>
+        <h2>Create a Bet</h2>
+        <form id="bet-form">
+          <div class="form-group">
+            <label for="bet-amount">Testing Bet Amount (TBET):</label>
+            <input
+              type="number"
+              id="bet-amount"
+              placeholder="Enter bet amount"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="oracle-address">Oracle Address (optional):</label>
+            <input
+              type="text"
+              id="oracle-address"
+              placeholder="Enter oracle address or leave empty"
+            />
+          </div>
+          <div class="form-group">
+            <button id="create-bet" type="submit">Create Bet</button>
+          </div>
+        </form>
+      </section>
 
-    <section>
-      <h2>Available Bets</h2>
-      <div id="available-bets"></div>
-    </section>
+      <section>
+        <h2>Available Bets</h2>
+        <div id="available-bets">No available bets at the moment.</div>
+      </section>
 
-    <section>
-      <h2>My Active Bets</h2>
-      <div id="active-bets"></div>
-    </section>
+      <section>
+        <h2>Bets Control Panel</h2>
+        <div id="bets-container">
+          <!-- Sample bet actions for demonstration; dynamic content will replace this in practice -->
+          <div class="bet-actions">
+            <p>Sample Bet #12345</p>
+            <button data-action="acceptBet" data-bet-id="12345">
+              Accept Bet
+            </button>
+            <button data-action="updateOracle" data-bet-id="12345">
+              Update Oracle
+            </button>
+            <button data-action="cancelBet" data-bet-id="12345">Cancel</button>
+          </div>
+          <!-- ... other bets and associated actions ... -->
+        </div>
+      </section>
 
-    <section id="error-message" style="display: none">
+      <section>
+        <h2>My Active Bets</h2>
+        <div id="active-bets">You have no active bets.</div>
+      </section>
+    </main>
+
+    <aside id="error-message" style="display: none">
       <h2>Error</h2>
-      <p id="no-metamask">...</p>
-    </section>
+      <p id="no-metamask">Error messages will appear here.</p>
+    </aside>
 
     <script src="./js/dapp.js"></script>
   </body>
