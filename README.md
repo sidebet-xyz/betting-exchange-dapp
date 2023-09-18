@@ -6,6 +6,14 @@ USE AT OWN DISCRETION!!!
 
 TESTING ONLY!!!
 
+## RSK Testnet TBET Faucet Contract Address
+
+0x8cd5419713974df0f4d3da4d0b1e423acaba7c28
+
+## RSK Testnet TBET Faucet Explorer
+
+https://explorer.testnet.rsk.co/address/0x8cd5419713974df0f4d3da4d0b1e423acaba7c28
+
 ## Betting Exchange Token Solidity Contracts
 
 https://github.com/sidebetxyz/betting-exchange-contracts
