@@ -6,7 +6,7 @@ USE AT OWN DISCRETION!!!
 
 TESTING ONLY!!!
 
-## Solidity Contracts
+## Betting Exchange Token Solidity Contracts
 
 https://github.com/sidebetxyz/betting-exchange-contracts
 
