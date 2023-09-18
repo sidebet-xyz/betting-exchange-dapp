@@ -6,6 +6,10 @@ USE AT OWN DISCRETION!!!
 
 TESTING ONLY!!!
 
+## Solidity Contracts
+
+https://github.com/sidebetxyz/betting-exchange-contracts
+
 ## RSK Testnet TBET Contract Address
 
 0x4F5D4a27625Cd12C8582E0ea390542a787D5d8f2
