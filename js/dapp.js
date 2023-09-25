@@ -8,8 +8,17 @@ async function initWeb3() {
     return;
   }
 
+  try {
+    // Request account access if needed
+    await window.ethereum.enable();
+  } catch (error) {
+    displayError("Access to your Ethereum account rejected.");
+    return;
+  }
+
   web3 = new Web3(window.ethereum);
   const networkId = await web3.eth.net.getId();
+  console.log(networkId);
 
   if (networkId !== RSK_TESTNET_ID) {
     displayError("Please switch to RSK testnet in your MetaMask!");
@@ -17,7 +26,11 @@ async function initWeb3() {
   }
 
   try {
-    accounts = await requestAccounts();
+    accounts = await web3.eth.getAccounts();
+    if (accounts.length === 0) {
+      displayError("No account available. Please log in to MetaMask.");
+      return;
+    }
     displayAddress(accounts[0]);
 
     if (!bettingExchangeTokenABI) {
